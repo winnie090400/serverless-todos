@@ -1,0 +1,77 @@
+service: serverless
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  stage: dev
+  region: us-east-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/todos"
+
+functions:
+  create:
+    handler: handler.create
+    events:
+      #新增代辦
+      - http:
+          path: /todos
+          method: POST
+          cors: true
+  readAll:
+    handler: handler.readAll
+    events:
+      #列出代辦列表
+      - http:
+          path: /todos
+          method: GET
+          cors: true
+  readOne:
+    handler: handler.readOne
+    events:
+      #取得單一代辦
+      - http:
+          path: /todos/{id}
+          method: GET
+          cors: true
+  update:
+    handler: handler.update
+    events:
+      #更新代辦
+      - http:
+          path: /todos/{id}
+          method: PUT
+          cors: true
+  delete:
+    handler: handler.delete
+    events:
+      #刪除代辦
+      - http:
+          path: /todos/{id}
+          method: DELETE
+          cors: true
+
+resources:
+  Resources:
+    TodosDynamoDbTable:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: "todos"
